@@ -7,7 +7,6 @@ import { collectAndPublishPPPoEData } from './jobs/pppoe'
 import { syncZabbixData } from './zabbix.job'
 import { muteOrphanAlert } from './mute-orphan-alert.job'
 import { generateOutdatedIssueMetrics } from './jobs/issue'
-import { syncDataCgsToDba } from './jobs/operator-nusanet'
 import {
   autocloseAssignedTicket,
   autoCloseEskalasiTickets,
