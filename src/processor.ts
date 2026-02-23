@@ -120,9 +120,6 @@ export async function processJob(message: JsMsg, nc: NatsConnection) {
     case 'autoCloseMonitoringTickets':
       autoCloseMonitoringTickets()
       break
-    case 'syncDataCgsToDba':
-      syncDataCgsToDba()
-      break
     case 'syncNusacontactCustomer':
       await syncNusacontactCustomer(String(subjectParts[3]))
       break
