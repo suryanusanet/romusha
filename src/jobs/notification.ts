@@ -1,5 +1,11 @@
 import { sendText as sendWhatsappText } from '../waenq'
 import { getAllEmployee } from '../nusawork'
+import {
+  getCustomerTransactionItem,
+  getItemInvoiceDetail,
+  getLatestItemTransaction,
+} from '../nis'
+
 import { BIRTHDAY_VOUCHER_PIC_PHONES } from '../config'
 
 const mmddFormatter = Intl.DateTimeFormat('en-CA', {
@@ -62,4 +68,54 @@ export async function notifyUpcomingBirthdays() {
   BIRTHDAY_VOUCHER_PIC_PHONES.forEach(async (phone: string) => {
     await sendWhatsappText(phone, notifMessages.join('\n'))
   })
+}
+
+export async function notifyCustomerBorrowedItems(
+  customerId: string,
+  jid: string,
+) {
+  const items = (await getCustomerTransactionItem(customerId)) as {
+    serial: string
+    description: string
+  }[]
+  const skippedInvoice = new Set<string>()
+  const processedInvoice = new Map<string, string>()
+  const borrowedItems = new Map<string, string[]>()
+  for (const { serial, description } of items) {
+    const { type, typeObjectId } = await getLatestItemTransaction(serial)
+    if (!type) continue
+    if (type !== 'invoice') continue
+    if (skippedInvoice.has(typeObjectId as string)) continue
+    if (processedInvoice.has(typeObjectId as string)) {
+      const subscriber = processedInvoice.get(typeObjectId as string) as string
+      const itemSet = borrowedItems.get(subscriber as string) as string[]
+      itemSet.push(`${serial} ${description}`)
+      borrowedItems.set(subscriber, itemSet)
+      continue
+    }
+
+    const { customerId: invoiceCustomerId, subscriber } =
+      await getItemInvoiceDetail(typeObjectId)
+    if (customerId !== invoiceCustomerId) {
+      skippedInvoice.add(typeObjectId)
+      continue
+    }
+
+    processedInvoice.set(typeObjectId, subscriber)
+    const itemSet = borrowedItems.has(subscriber)
+      ? (borrowedItems.get(subscriber as string) as string[])
+      : []
+    itemSet.push(`${serial} - ${description}`)
+    borrowedItems.set(subscriber, itemSet)
+  }
+  let messageLines: string[] = []
+  for (const [subscriber, items] of borrowedItems) {
+    messageLines.push(`\n${subscriber}:`)
+    for (const item of items) {
+      messageLines.push(`  ${item}`)
+    }
+  }
+  const message =
+    messageLines.length == 0 ? 'no data found' : messageLines.join('\n').trim()
+  await sendWhatsappText(jid, message)
 }
