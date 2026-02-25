@@ -25,11 +25,11 @@ function parseNetworkInterface(
     if (!line.trim()) continue
     const match = line
       .trim()
-      .match(/\s*\d+\s+(?:D\s+)?[\d.]+\/\d+\s+([\d.]+)\s+(<pppoe-[^>]+>)/)
+      .match(/([^\s]+)\s+([\d.]+)\s*$/)
     if (match) {
       results.push({
-        network: match[1],
-        iface: match[2],
+        iface: match[1],
+        network: match[2],
       })
     }
   }
@@ -73,13 +73,13 @@ export async function collectAndPublishPPPoEData(natsConn: NatsConnection) {
     timestamp: Date.now(),
     servers: {},
   }
-  for (const { name, host, port, username } of servers) {
+  for (const { name, host, port, username, command } of servers) {
     const result = (await sshExec(
       host,
       port,
       username,
       privateKeyBuffer,
-      '/ip address print where interface ~"<pppoe-"',
+      command,
     )) as string
     const interfaces = parseNetworkInterface(result)
     message.servers[name] = interfaces
