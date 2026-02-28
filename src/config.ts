@@ -6,13 +6,6 @@ export const MIN_BACKOFF_DELAY_SECONDS =
   process.env.MIN_BACKOFF_DELAY_SECONDS || 1
 export const MAX_BACKOFF_DELAY_SECONDS =
   process.env.MAX_BACKOFF_DELAY_SECONDS || 32
-export const NUSAWORK_AUTH_TOKEN_API_URL =
-  process.env.NUSAWORK_AUTH_TOKEN_API_URL || 'https://nusawork.com/api/token'
-export const NUSAWORK_AUTH_TOKEN_API_KEY =
-  process.env.NUSAWORK_AUTH_TOKEN_API_KEY || ''
-export const NUSAWORK_EMPLOYEE_API_URL =
-  process.env.NUSAWORK_EMPLOYEE_API_URL ||
-  'https://nusawork.com/api/v4.1/employee/filter'
 export const NUSAWORK_EMPLOYEE_API_V2_URL =
   process.env.NUSAWORK_EMPLOYEE_API_V2_URL ||
   'https://nusawork.com/api/v4.2/client/employee/filter'
@@ -25,6 +18,18 @@ export const NUSAWORK_SCHEDULE_API_URL =
 export const NUSAWORK_EMPLOYEE_PHOTO_URL_PREFIX =
   process.env.NUSAWORK_EMPLOYEE_PHOTO_URL_PREFIX ||
   'https://transit.is5.nusa.net.id/photo-crop/?t='
+export const NUSAWORK_AUTH_REFRESH_MARGIN = Number(
+  process.env.NUSAWORK_AUTH_REFRESH_MARGIN || 3600,
+)
+export const NUSAWORK_AUTH_API_URL =
+  process.env.NUSAWORK_AUTH_TOKEN_API_URL || 'https://nusawork.com/api/auth'
+export const NUSAWORK_AUTH_GRANT_TYPE =
+  process.env.NUSAWORK_AUTH_GRANT_TYPE || 'client_credentials'
+export const NUSAWORK_AUTH_CLIENT_ID = Number(
+  process.env.NUSAWORK_AUTH_CLIENT_ID || 3,
+)
+export const NUSAWORK_AUTH_CLIENT_SECRET =
+  process.env.NUSAWORK_AUTH_CLIENT_SECRET || 'xxxxxxxxxxxxxxxx'
 
 export const EMPLOYEE_CHART_FILE =
   process.env.EMPLOYEE_CHART_FILE || '/tmp/employee-chart.json'
@@ -93,3 +98,88 @@ export const WHATSAPP_FEEDBACK_URL = process.env.WHATSAPP_FEEDBACK_URL || ''
 export const WHATSAPP_QUESTION = process.env.WHATSAPP_QUESTION || ''
 export const SYNC_T2T_API_URL = process.env.SYNC_T2T_API_URL || ''
 export const SYNC_T2T_API_KEY = process.env.SYNC_T2T_API_KEY || ''
+
+export const ISSUE_GRACE_PERIOD_SECONDS = Number(
+  process.env.ISSUE_GRACE_PERIOD_SECONDS || 14400,
+)
+export const ISSUE_METRICS_FILE =
+  process.env.ISSUE_METRICS_FILE || './data/issue-metrics.txt'
+export const ISSUE_METRICS_FILE_TEMP =
+  process.env.ISSUE_METRICS_FILE_TEMP || './data/issue-metrics.txt.tmp'
+
+export const FBSTAR_TICKET_API_URL = process.env.FBSTAR_TICKET_API_URL || ''
+export const FBSTAR_TOKEN_API_URL = process.env.FBSTAR_TOKEN_API_URL || ''
+export const FBSTAR_API_USERNAME = process.env.FBSTAR_API_USERNAME || ''
+export const FBSTAR_API_PASSWORD = process.env.FBSTAR_API_PASSWORD || ''
+export const FBSTAR_TICKET_METRICS_FILE =
+  process.env.FBSTAR_TICKET_METRICS_FILE || './data/fbstar-ticket-metrics.txt'
+export const FBSTAR_TICKET_METRICS_FILE_TEMP =
+  process.env.FBSTAR_TICKET_METRICS_FILE_TEMP ||
+  './data/fbstar-ticket-metrics.txt.tmp'
+
+export const TICKET_LINK_BASE_URL =
+  process.env.TICKET_LINK_BASE_URL || 'http://localhost:3000/ticket'
+export const TICKET_ID_ENCODED_LENGTH = Number(
+  process.env.TICKET_ID_LENGTH || 8,
+)
+export const TICKET_ID_ENCODED_CHARS =
+  process.env.TICKET_ID_ENCODED_CHARS || 'abcdefghijklmnopqrstuvwxyz'
+export const TICKET_ID_ENCODED_SALT =
+  process.env.TICKET_ID_ENCODED_SALT || 'xxxxxxxx'
+
+export const ONLINE_TICKET_METRICS_FILE =
+  process.env.ONLINE_TICKET_METRICS_FILE || './data/online-ticket-metrics.txt'
+export const ONLINE_TICKET_METRICS_FILE_TEMP =
+  process.env.ONLINE_TICKET_METRICS_FILE_TEMP ||
+  './data/online-ticket-metrics.txt.tmp'
+
+export const INCOMPLETE_SUBSCRIBER_DATA_METRICS_FILE =
+  process.env.INCOMPLETE_SUBSCRIBER_DATA_METRICS_FILE ||
+  './data/incomplete-subscriber-data-metrics.txt'
+export const INCOMPLETE_SUBSCRIBER_DATA_METRICS_FILE_TEMP =
+  process.env.INCOMPLETE_SUBSCRIBER_DATA_METRICS_FILE_TEMP ||
+  './data/incomplete-subscriber-data-metrics.txt.tmp'
+
+export const IFORTE_ZABBIX_API_URL =
+  process.env.IFORTE_ZABBIX_API_URL || 'http://localhost/zabbix/api_jsonrpc.php'
+export const IFORTE_ZABBIX_USERNAME =
+  process.env.IFORTE_ZABBIX_USERNAME || 'zabbix'
+export const IFORTE_ZABBIX_PASSWORD =
+  process.env.IFORTE_ZABBIX_PASSWORD || 'zabbix'
+
+export const FBSTAR_DOWN_SUBSCRIBER_ALERT_URL =
+  process.env.FBSTAR_DOWN_SUBSCRIBER_ALERT_URL ||
+  'http://localhost:9093/api/v2/alerts/groups?filter=alertname%3D%22down%22&filter=group%3D%22fttx%22&filter=link%3d%22fs%22&silenced=true&inhibited=false&active=true'
+export const FBSTAR_DOWN_SUBSCRIBER_ALERT_LOOKBACK_HOURS = Number(
+  process.env.FBSTAR_DOWN_SUBSCRIBER_ALERT_LOOKBACK_HOURS || 48,
+)
+
+// nusacontact sync contact
+export const nusacontactSyncContactApiUrl =
+  process.env.NUSACONTACT_SYNC_CONTACT_API_URL || ''
+export const nusacontactApiKey = process.env.NUSACONTACT_API_KEY || ''
+export const nusacontactSyncContactMaxAttempts =
+  process.env.NUSACONTACT_SYNC_CONTACT_MAX_ATTEMPTS || '8'
+
+export const DBAIS5_MYSQL_HOST = process.env.DBAIS5_MYSQL_HOST || 'localhost'
+export const DBAIS5_MYSQL_PORT = process.env.DBAIS5_MYSQL_PORT || 3306
+export const DBAIS5_MYSQL_USER = process.env.DBAIS5_MYSQL_USER || 'root'
+export const DBAIS5_MYSQL_PASSWORD = process.env.DBAIS5_MYSQL_PASSWORD || ''
+export const DBAIS5_MYSQL_DB = process.env.DBAIS5_MYSQL_DB || 'test'
+
+export const BIRTHDAY_VOUCHER_TEMPLATE_PATH =
+  process.env.BIRTHDAY_VOUCHER_TEMPLATE_PATH ||
+  './asset/birthday-voucher-template.png'
+export const BIRTHDAY_VOUCHER_PIC_PHONES = JSON.parse(
+  process.env.BIRTHDAY_VOUCHER_PIC_PHONES || '[]',
+)
+export const BIRTHDAY_VOUCHER_PERIOD_DAYS = Number(
+  process.env.BIRTHDAY_VOUCHER_PERIOD_DAYS || 90,
+)
+export const BIRTHDAY_WISHES =
+  process.env.BIRTHDAY_WISHES || 'Selamat ulang tahun, semoga panjang umur'
+
+export const WAENQ_MESSAGE_API_URL =
+  process.env.WAENQ_MESSAGE_API_URL || 'http://localhost:3000/v2/messages'
+export const WAENQ_MESSAGE_API_TOKEN =
+  process.env.WAENQ_MESSAGE_API_TOKEN || 'xxxxxxxxxxxxxxxx'

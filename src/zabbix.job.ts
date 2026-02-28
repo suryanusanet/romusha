@@ -1,6 +1,8 @@
-import { initDb } from './nis.mysql'
+import { pool as db } from './nis.mysql'
 import { createConnection } from 'mysql2/promise'
 import { Client } from 'pg'
+import { batchArray } from './array'
+import { isValidDateFormat } from './date'
 import {
   ZABBIX_PSQL_DB,
   ZABBIX_PSQL_HOST,
@@ -22,14 +24,6 @@ interface GraphMap {
   [csid: number]: GraphMapEntry
 }
 
-function batchArray<T>(array: T[], batchSize: number): T[][] {
-  const batches: T[][] = []
-  for (let i = 0; i < array.length; i += batchSize) {
-    batches.push(array.slice(i, i + batchSize))
-  }
-  return batches
-}
-
 function isDominantColor(hexColor: string): 'blue' | 'green' | 'unknown' {
   // Remove '#' if present
   const hex = hexColor.startsWith('#') ? hexColor.slice(1) : hexColor
@@ -49,37 +43,8 @@ function isDominantColor(hexColor: string): 'blue' | 'green' | 'unknown' {
   }
 }
 
-function isValidDateFormat(dateString: string) {
-  // Regular expression to match YYYY-MM-DD format
-  const regex = /^\d{4}-\d{2}-\d{2}$/
-
-  // Test if the string matches the pattern
-  if (!regex.test(dateString)) {
-    return false
-  }
-
-  // Optionally verify it's actually a valid date
-  // by trying to parse it
-  const parts = dateString.split('-')
-  const year = parseInt(parts[0], 10)
-  const month = parseInt(parts[1], 10) - 1 // Months are 0-based in JS
-  const day = parseInt(parts[2], 10)
-
-  const date = new Date(year, month, day)
-
-  // Check if the date is valid and matches the input
-  return (
-    date.getFullYear() === year &&
-    date.getMonth() === month &&
-    date.getDate() === day
-  )
-}
-
 export async function syncZabbixData(date: string = 'yesterday') {
-  const db = initDb()
-  if (!db) {
-    throw new Error('MySQL initialization failed')
-  }
+  const zabbixGraphPrefix = 'n'
   const zbxDb = await createConnection({
     host: ZBX_MYSQL_HOST,
     user: ZBX_MYSQL_USER,
@@ -103,6 +68,7 @@ export async function syncZabbixData(date: string = 'yesterday') {
     LEFT JOIN Customer c ON cs.CustId = c.CustId
     WHERE cs.CustStatus NOT IN ('NA')
     AND c.BranchId = '020' 
+    AND NOT (TRIM(cszg.GraphId) LIKE 's%')
     ORDER BY cs.CustServId, cszg.OrderNo, cszg.Id
   `
 
@@ -124,8 +90,10 @@ export async function syncZabbixData(date: string = 'yesterday') {
   for (const csid in graphMap) {
     const { gid, acc } = graphMap[csid]
     if (gid.startsWith('m') || gid.startsWith('b') || gid.startsWith('j')) {
-      zabbixGids.push(Number(gid.substring(1)))
-      csMap[gid.substring(1)] = { csid, acc }
+      const realGid = gid.substring(1).trim()
+      const safeGraphid = `${zabbixGraphPrefix}${realGid}`
+      zabbixGids.push(Number(realGid))
+      csMap[`${safeGraphid}`] = { csid, acc }
     } else {
       zbxGids.push(Number(gid))
       csMap[gid] = { csid, acc }
@@ -212,18 +180,19 @@ export async function syncZabbixData(date: string = 'yesterday') {
       ...[startTimestamp, startTimestamp + 86400],
     ])
     for (const { graphid, color, volume } of result.rows as any) {
-      if (!(`${graphid}` in trafficRecord)) {
-        trafficRecord[`${graphid}`] = {
+      const safeGraphid = `${zabbixGraphPrefix}${graphid}`
+      if (!(`${safeGraphid}` in trafficRecord)) {
+        trafficRecord[`${safeGraphid}`] = {
           upload: 0,
           download: 0,
-          csid: csMap[`${graphid}`].csid,
-          acc: csMap[`${graphid}`].acc,
+          csid: csMap[`${safeGraphid}`].csid,
+          acc: csMap[`${safeGraphid}`].acc,
         }
       }
       if (isDominantColor(color) === 'green') {
-        trafficRecord[`${graphid}`].download = volume
+        trafficRecord[`${safeGraphid}`].download = volume
       } else if (isDominantColor(color) === 'blue') {
-        trafficRecord[`${graphid}`].upload = volume
+        trafficRecord[`${safeGraphid}`].upload = volume
       }
     }
   }
