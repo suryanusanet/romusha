@@ -56,7 +56,7 @@ export async function getLatestItemTransaction(serial: string) {
 export async function getItemInvoiceDetail(invoiceId: string) {
   const sql = [
     'SELECT (sih.RNo <> 0) AS isReversed, (sih.Type = 1) AS isRequest,',
-    'sh.CustId AS customer_id, cs.CustAccName AS subscriber',
+    'sh.CustId AS customer_id, cs.CustAccName AS subscriber, sih.Status as status',
     'FROM StockInvoiceHead sih',
     'LEFT JOIN SPMBHead sh ON sih.Spmb = sh.No',
     'LEFT JOIN CustomerServices cs ON sh.CustServId = cs.CustServId',
@@ -69,9 +69,11 @@ export async function getItemInvoiceDetail(invoiceId: string) {
     isRequest,
     customer_id: customerId,
     subscriber,
+    status,
   } of rows as any) {
     if (isReversed && isRequest) continue
     if (!isRequest && !isReversed) continue
+    if (['BL'].includes(status)) continue
     returnData.customerId = customerId
     returnData.subscriber = subscriber
   }
