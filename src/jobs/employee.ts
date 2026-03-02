@@ -25,11 +25,12 @@ function transformEmployeeData(employees: any[], jobLevels: any[]) {
       Jabatan: employee.job_position,
       Departemen: employee.organization_name,
       IDAtasan:
-        reportTo.employee_id == employee.employee_id
+        reportTo?.employee_id == employee.employee_id
           ? '-'
-          : reportTo.employee_id,
+          : reportTo?.employee_id,
       URLPhoto: NUSAWORK_EMPLOYEE_PHOTO_URL_PREFIX + employee.photo_profile,
       Level: jobLevel?.position,
+      Branch: employee.branch_name,
     }
   })
 }
