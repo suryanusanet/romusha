@@ -19,16 +19,24 @@ export async function getCustomerTransactionItem(customerId: string) {
   const [rows] = await pool.execute(sql, [customerId])
   const items = (
     rows as Array<{ serials: string | null; item_description: string | null }>
-  ).flatMap(({ serials, item_description }) =>
-    serials
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((serial) => ({
-        serial,
-        description: item_description,
-      })),
   )
+    .flatMap(({ serials, item_description }) =>
+      serials
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((serial) => ({
+          serial,
+          description: item_description,
+        })),
+    )
+    .reduce((acc: any, item: any) => {
+      const isDuplicate = acc.some((el: any) => {
+        return el.serial === item.serial
+      })
+      if (!isDuplicate) acc.push(item)
+      return acc
+    }, [])
   return items
 }
 
