@@ -81,7 +81,7 @@ export async function getItemInvoiceDetail(invoiceId: string) {
   } of rows as any) {
     if (isReversed && isRequest) continue
     if (!isRequest && !isReversed) continue
-    if (['BL'].includes(status)) continue
+    if (['BL', 'RK'].includes(status)) continue
     returnData.customerId = customerId
     returnData.subscriber = subscriber
   }
