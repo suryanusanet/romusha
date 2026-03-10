@@ -40,6 +40,21 @@ export async function getCustomerTransactionItem(customerId: string) {
   return items
 }
 
+export async function getItemNameBySerial(serial: string) {
+  const sql = [
+    'SELECT m.Name FROM stock_barcode sb',
+    'LEFT JOIN Master m ON sb.code = m.Code AND sb.branch_id = m.Branch',
+    'WHERE sb.barcode = ?',
+  ].join(' ')
+  const [rows] = await pool.execute(sql, [serial])
+
+  if (rows && Array.isArray(rows) && rows.length > 0) {
+    return (rows[0] as { Name: string }).Name
+  }
+
+  return ''
+}
+
 export async function getLatestItemTransaction(serial: string) {
   const sql = [
     'SELECT sbh.type, sbh.type_id AS type_object_id',
@@ -91,6 +106,7 @@ export async function getItemInvoiceDetail(invoiceId: string) {
 export async function getSerialTransactionHistory(serial: string) {
   const sql = [
     'SELECT sbh.type, sbh.type_id AS type_object_id,',
+    'IFNULL(sih.CustId, "") AS customer_id,',
     'IFNULL(p.InvoiceDate, sih.Date) AS type_date,',
     'sih.Status AS invoice_status, sih.Type AS invoice_type, sih.Reverse AS is_reversed',
     'FROM stock_barcode_history sbh',
