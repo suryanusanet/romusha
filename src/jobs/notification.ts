@@ -146,13 +146,15 @@ async function sendSerialHistoryNotification(jid: string, serial: string) {
       if (h.type === 'purchase') typeLabel = 'Purchase'
       else if (h.type === 'invoice') typeLabel = 'Invoice'
 
-      switch (h.invoice_type) {
-        case '1':
-          typeLabel = `${typeLabel} Permintaan`
-          break
-        case '0':
-          typeLabel = `${typeLabel} Pengembalian`
-          break
+      if (h.invoice_type != null) {
+        switch (parseInt(h.invoice_type)) {
+          case 1:
+            typeLabel = `${typeLabel} Permintaan`
+            break
+          case 0:
+            typeLabel = `${typeLabel} Pengembalian`
+            break
+        }
       }
 
       switch (h.invoice_status) {
@@ -170,7 +172,7 @@ async function sendSerialHistoryNotification(jid: string, serial: string) {
           break
       }
 
-      if (h.is_reversed) {
+      if (parseInt(h.is_reversed) == 1) {
         typeLabel = `Reversed ${typeLabel}`
       }
 
