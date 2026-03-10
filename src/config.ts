@@ -183,3 +183,6 @@ export const WAENQ_MESSAGE_API_URL =
   process.env.WAENQ_MESSAGE_API_URL || 'http://localhost:3000/v2/messages'
 export const WAENQ_MESSAGE_API_TOKEN =
   process.env.WAENQ_MESSAGE_API_TOKEN || 'xxxxxxxxxxxxxxxx'
+
+export const EXTRACT_SERIAL_URL = process.env.EXTRACT_SERIAL_URL || ''
+export const EXTRACT_SERIAL_API_KEY = process.env.EXTRACT_SERIAL_API_KEY || ''

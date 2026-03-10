@@ -87,3 +87,19 @@ export async function getItemInvoiceDetail(invoiceId: string) {
   }
   return returnData
 }
+
+export async function getSerialTransactionHistory(serial: string) {
+  const sql = [
+    'SELECT sbh.type, sbh.type_id AS type_object_id,',
+    'IFNULL(p.InvoiceDate, sih.Date) AS type_date,',
+    'sih.Status AS invoice_status, sih.Type AS invoice_type, sih.Reverse AS is_reversed',
+    'FROM stock_barcode_history sbh',
+    'LEFT JOIN stock_barcode sb ON sbh.barcode_id = sb.id',
+    'LEFT JOIN Purchase p ON sbh.type = "purchase" AND sbh.type_id = p.Id',
+    'LEFT JOIN StockInvoiceHead sih ON sbh.type = "invoice" AND sbh.type_id = sih.No',
+    'WHERE sb.barcode = ? AND sbh.type NOT IN("spmb")',
+    'ORDER BY sbh.time',
+  ].join(' ')
+  const [rows] = await pool.execute(sql, [serial])
+  return rows
+}

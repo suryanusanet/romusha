@@ -4,9 +4,11 @@ import {
   getCustomerTransactionItem,
   getItemInvoiceDetail,
   getLatestItemTransaction,
+  getSerialTransactionHistory,
 } from '../nis'
 
-import { BIRTHDAY_VOUCHER_PIC_PHONES } from '../config'
+import axios from 'axios'
+import { BIRTHDAY_VOUCHER_PIC_PHONES, EXTRACT_SERIAL_URL, EXTRACT_SERIAL_API_KEY } from '../config'
 
 const mmddFormatter = Intl.DateTimeFormat('en-CA', {
   month: '2-digit',
@@ -118,4 +120,102 @@ export async function notifyCustomerBorrowedItems(
   const message =
     messageLines.length == 0 ? 'no data found' : messageLines.join('\n').trim()
   await sendWhatsappText(jid, message)
+}
+
+async function sendSerialHistoryNotification(jid: string, serial: string) {
+  const history = (await getSerialTransactionHistory(serial)) as {
+    type: string
+    type_object_id: string
+    type_date: string | Date | null
+    invoice_status: string
+    invoice_type: string
+    is_reversed: string
+  }[]
+
+  let message = `Serial: ${serial}\n\nHistory:\n`
+  if (Array.isArray(history) && history.length > 0) {
+    history.forEach((h) => {
+      let typeLabel = h.type
+      if (h.type === 'purchase') typeLabel = 'Purchase'
+      else if (h.type === 'invoice') typeLabel = 'Invoice'
+
+      switch (h.invoice_type) {
+        case '1':
+          typeLabel = `${typeLabel} Permintaan`
+          break
+        case '0':
+          typeLabel = `${typeLabel} Pengembalian`
+          break
+      }
+
+      switch (h.invoice_status) {
+        case 'BL':
+          typeLabel = `${typeLabel} Beli`
+          break
+        case 'PM':
+          typeLabel = `${typeLabel} Pinjam`
+          break
+        case 'IV':
+          typeLabel = `${typeLabel} Inventaris`
+          break
+        case 'RK':
+          typeLabel = `${typeLabel} Rusak`
+          break
+      }
+
+      if (h.is_reversed) {
+        typeLabel = `Reversed ${typeLabel}`
+      }
+
+      message += `- ${typeLabel}: Tanggal ${h.type_date}\n`
+    })
+  } else {
+    message += 'No transaction history found.'
+  }
+
+  await sendWhatsappText(jid, message.trim())
+}
+
+export async function notifySerialTransactions(
+  serial: string,
+  jid: string,
+  image: string,
+) {
+  switch (serial) {
+    case 'IMAGE':
+      if (image && EXTRACT_SERIAL_URL) {
+        try {
+          const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
+          const imageBuffer = Buffer.from(base64Data, 'base64')
+
+          const formData = new FormData()
+          const blob = new Blob([imageBuffer], { type: 'image/jpeg' })
+          formData.append('image', blob, 'image.jpg')
+
+          const response = await axios.post(EXTRACT_SERIAL_URL, formData, {
+            headers: {
+              'x-api-key': EXTRACT_SERIAL_API_KEY,
+            },
+          })
+
+          const data = response.data
+          if (data.success && data.found) {
+            await sendSerialHistoryNotification(jid, data.serial_number)
+          } else {
+            const errorMsg = data.error || 'Serial not found in image.'
+            await sendWhatsappText(jid, `Extraction Result: ${errorMsg}`)
+          }
+        } catch (error) {
+          console.error('Failed to post IMAGE to extract serial API', error)
+          await sendWhatsappText(
+            jid,
+            'Error: Failed to process serial extraction.',
+          )
+        }
+      }
+      break
+    default:
+      await sendSerialHistoryNotification(jid, serial)
+      break
+  }
 }
