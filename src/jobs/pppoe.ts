@@ -23,9 +23,7 @@ function parseNetworkInterface(
   const lines = networkInterfacesString.trim().split('\n').slice(3)
   for (const line of lines) {
     if (!line.trim()) continue
-    const match = line
-      .trim()
-      .match(/([^\s]+)\s+([\d.]+)\s*$/)
+    const match = line.trim().match(/([^\s]+)\s+([\d.]+)\s*$/)
     if (match) {
       results.push({
         iface: match[1],

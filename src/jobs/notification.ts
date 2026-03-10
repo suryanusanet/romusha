@@ -3,12 +3,17 @@ import { getAllEmployee } from '../nusawork'
 import {
   getCustomerTransactionItem,
   getItemInvoiceDetail,
+  getItemNameBySerial,
   getLatestItemTransaction,
   getSerialTransactionHistory,
 } from '../nis'
 
 import axios from 'axios'
-import { BIRTHDAY_VOUCHER_PIC_PHONES, EXTRACT_SERIAL_URL, EXTRACT_SERIAL_API_KEY } from '../config'
+import {
+  BIRTHDAY_VOUCHER_PIC_PHONES,
+  EXTRACT_SERIAL_URL,
+  EXTRACT_SERIAL_API_KEY,
+} from '../config'
 
 const mmddFormatter = Intl.DateTimeFormat('en-CA', {
   month: '2-digit',
@@ -126,13 +131,15 @@ async function sendSerialHistoryNotification(jid: string, serial: string) {
   const history = (await getSerialTransactionHistory(serial)) as {
     type: string
     type_object_id: string
-    type_date: string | Date | null
+    customer_id: string
+    type_date: Date
     invoice_status: string
     invoice_type: string
     is_reversed: string
   }[]
 
-  let message = `Serial: ${serial}\n\nHistory:\n`
+  const itemName = await getItemNameBySerial(serial)
+  let message = `${serial} ${itemName}\n`
   if (Array.isArray(history) && history.length > 0) {
     history.forEach((h) => {
       let typeLabel = h.type
@@ -167,7 +174,13 @@ async function sendSerialHistoryNotification(jid: string, serial: string) {
         typeLabel = `Reversed ${typeLabel}`
       }
 
-      message += `- ${typeLabel}: Tanggal ${h.type_date}\n`
+      const date = Intl.DateTimeFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(h.type_date)
+
+      message += `- ${date} ${h.customer_id} ${typeLabel}\n`
     })
   } else {
     message += 'No transaction history found.'

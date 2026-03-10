@@ -19,17 +19,40 @@ export async function getCustomerTransactionItem(customerId: string) {
   const [rows] = await pool.execute(sql, [customerId])
   const items = (
     rows as Array<{ serials: string | null; item_description: string | null }>
-  ).flatMap(({ serials, item_description }) =>
-    serials
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((serial) => ({
-        serial,
-        description: item_description,
-      })),
   )
+    .flatMap(({ serials, item_description }) =>
+      serials
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((serial) => ({
+          serial,
+          description: item_description,
+        })),
+    )
+    .reduce((acc: any, item: any) => {
+      const isDuplicate = acc.some((el: any) => {
+        return el.serial === item.serial
+      })
+      if (!isDuplicate) acc.push(item)
+      return acc
+    }, [])
   return items
+}
+
+export async function getItemNameBySerial(serial: string) {
+  const sql = [
+    'SELECT m.Name FROM stock_barcode sb',
+    'LEFT JOIN Master m ON sb.code = m.Code AND sb.branch_id = m.Branch',
+    'WHERE sb.barcode = ?',
+  ].join(' ')
+  const [rows] = await pool.execute(sql, [serial])
+
+  if (rows && Array.isArray(rows) && rows.length > 0) {
+    return (rows[0] as { Name: string }).Name
+  }
+
+  return ''
 }
 
 export async function getLatestItemTransaction(serial: string) {
@@ -73,7 +96,7 @@ export async function getItemInvoiceDetail(invoiceId: string) {
   } of rows as any) {
     if (isReversed && isRequest) continue
     if (!isRequest && !isReversed) continue
-    if (['BL'].includes(status)) continue
+    if (['BL', 'RK'].includes(status)) continue
     returnData.customerId = customerId
     returnData.subscriber = subscriber
   }
@@ -83,6 +106,7 @@ export async function getItemInvoiceDetail(invoiceId: string) {
 export async function getSerialTransactionHistory(serial: string) {
   const sql = [
     'SELECT sbh.type, sbh.type_id AS type_object_id,',
+    'IFNULL(sih.CustId, "") AS customer_id,',
     'IFNULL(p.InvoiceDate, sih.Date) AS type_date,',
     'sih.Status AS invoice_status, sih.Type AS invoice_type, sih.Reverse AS is_reversed',
     'FROM stock_barcode_history sbh',
