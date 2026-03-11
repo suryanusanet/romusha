@@ -1,4 +1,4 @@
-import { type JsMsg, type NatsConnection } from 'nats'
+import { type JsMsg, type NatsConnection, StringCodec } from 'nats'
 import { generateEmployeeChart, sendEmployeeOnDutyNotif } from './jobs/employee'
 import logger from './logger'
 import { syncFttxMonitor } from './fttx.job'
@@ -36,6 +36,7 @@ import {
 } from './jobs/notification'
 
 export async function processJob(message: JsMsg, nc: NatsConnection) {
+  const sc = StringCodec()
   const subjectParts = message.subject.split('.')
   const jobName = subjectParts[2]
   logger.info(`executing job: ${jobName}`)
@@ -127,8 +128,8 @@ export async function processJob(message: JsMsg, nc: NatsConnection) {
     case 'notifySerialTransactions':
       const serial = subjectParts[3]
       const jid = subjectParts.slice(4).join('.')
-      const image = message.data?.toString()
-      await notifySerialTransactions(serial, jid, image)
+      const payload = JSON.parse(sc.decode(message.data))
+      await notifySerialTransactions(serial, jid, payload.image)
       break
 
     default:

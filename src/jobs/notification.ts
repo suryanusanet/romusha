@@ -200,13 +200,11 @@ export async function notifySerialTransactions(
     case 'IMAGE':
       if (image && EXTRACT_SERIAL_URL) {
         try {
-          const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
-          const imageBuffer = Buffer.from(base64Data, 'base64')
-
+          const imageBuffer = Buffer.from(image, 'base64')
+          const imageUint8Array = new Uint8Array(imageBuffer)
+          const imageBlob = new Blob([imageUint8Array], { type: 'image/jpeg' })
           const formData = new FormData()
-          const blob = new Blob([imageBuffer], { type: 'image/jpeg' })
-          formData.append('image', blob, 'image.jpg')
-
+          formData.append('image', imageBlob, 'image.jpg')
           const response = await axios.post(EXTRACT_SERIAL_URL, formData, {
             headers: {
               'x-api-key': EXTRACT_SERIAL_API_KEY,
