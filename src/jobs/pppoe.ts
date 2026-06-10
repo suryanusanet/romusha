@@ -67,22 +67,30 @@ async function sshExec(
 export async function collectAndPublishPPPoEData(natsConn: NatsConnection) {
   const servers = JSON.parse(PPPOE_SERVERS)
   const privateKeyBuffer = Buffer.from(PPPOE_SERVERS_PRIVATE_KEY)
-  const message: NatsMessage = {
-    timestamp: Date.now(),
-    servers: {},
-  }
-  for (const { name, host, port, username, command } of servers) {
-    const result = (await sshExec(
-      host,
-      port,
-      username,
-      privateKeyBuffer,
-      command,
-    )) as string
-    const interfaces = parseNetworkInterface(result)
-    message.servers[name] = interfaces
-    console.log(name)
-  }
   const jc = JSONCodec()
-  natsConn.publish(PPPOE_FETHED_EVENT_SUBJECT, jc.encode(message))
+
+  for (const { name, host, port, username, command } of servers) {
+    try {
+      const result = (await sshExec(
+        host,
+        port,
+        username,
+        privateKeyBuffer,
+        command,
+      )) as string
+      const interfaces = parseNetworkInterface(result)
+      
+      const message: NatsMessage = {
+        timestamp: Date.now(),
+        servers: {
+          [name]: interfaces,
+        },
+      }
+      
+      natsConn.publish(PPPOE_FETHED_EVENT_SUBJECT, jc.encode(message))
+      console.log(`Published data for server: ${name}`)
+    } catch (error) {
+      console.error(`Failed to collect data for server ${name}:`, error)
+    }
+  }
 }
