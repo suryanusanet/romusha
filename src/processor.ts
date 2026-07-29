@@ -14,6 +14,7 @@ import {
   autoCloseNocTickets,
   autoCloseSurveyTickets,
   autoCloseMonitoringTickets,
+  autoCloseMigrasiTickets,
 } from './jobs/auto-close-ticket'
 import {
   notifyAllOverdueTickets as notifyAllOverdueFbstarTickets,
@@ -122,6 +123,9 @@ export async function processJob(message: JsMsg, nc: NatsConnection) {
       break
     case 'autoCloseMonitoringTickets':
       autoCloseMonitoringTickets()
+      break
+    case 'autoCloseMigrasiTickets':
+      autoCloseMigrasiTickets()
       break
     case 'syncNusacontactCustomer':
       await syncNusacontactCustomer(String(subjectParts[3]))
