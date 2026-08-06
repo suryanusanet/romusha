@@ -29,6 +29,7 @@ function sleep(ms: number) {
 export async function sendWhatsAppFeedbackScore(
   destination: string,
   JobTitle: string,
+  namespace: string = WHATSAPP_NUSACONTACT_API_NAMESPACE,
   retries: number = 3,
 ) {
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -41,7 +42,7 @@ export async function sendWhatsAppFeedbackScore(
           to: destination,
           type: 'template',
           template: {
-            namespace: WHATSAPP_NUSACONTACT_API_NAMESPACE,
+            namespace,
             name: 'feedback_score_v05',
             language: { code: 'id' },
             components: [
