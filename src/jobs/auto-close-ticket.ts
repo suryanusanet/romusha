@@ -10,6 +10,7 @@ import { sendWhatsAppFeedbackScore, saveFeedbackSendInfo } from '../nusawa'
 import { processSyncT2T } from '../syncT2t'
 
 const IGNORED_PERIOD = 86400
+const IGNORED_PERIOD_ESKALASI = 3600
 
 export async function autocloseAssignedTicket() {
   const REQUEST_TICKET = 1
@@ -102,7 +103,8 @@ export async function autocloseAssignedTicket() {
       gracePeriod = GRACEPERIOD_ENGINEER
       resolver = 'engineer'
     } else {
-      continue
+      gracePeriod = GRACEPERIOD_HELPDESK
+      resolver = 'system'
     }
 
     const updatedTimePlusGrace = new Date(
@@ -238,7 +240,7 @@ export async function autoCloseEskalasiTickets(): Promise<void> {
     proceeded.add(TtsId)
 
     const updatedTime = new Date(UpdatedTime)
-    if (updatedTime.getTime() + IGNORED_PERIOD * 1000 > now.getTime()) continue
+    if (updatedTime.getTime() + IGNORED_PERIOD_ESKALASI * 1000 > now.getTime()) continue
 
     const [assignRow] = await mysqlDb.query(
       `SELECT AssignedNo FROM TtsPIC WHERE TtsId = ? ORDER BY AssignedNo DESC LIMIT 1`,
@@ -512,7 +514,6 @@ export async function autoCloseSurveyTickets(): Promise<void> {
     LEFT JOIN Customer c ON cs.CustId = c.CustId
     WHERE t.TtsTypeId = 5
       AND t.Status = 'Call'
-      AND c.BranchId = '020'
     ORDER BY tu.TtsId, tu.UpdatedTime DESC
     `,
   )
