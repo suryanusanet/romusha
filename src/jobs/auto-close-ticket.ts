@@ -669,3 +669,84 @@ export async function autoCloseMonitoringTickets(): Promise<void> {
     }
   }
 }
+
+export async function autoCloseMigrasiTickets(): Promise<void> {
+  const [rows] = await mysqlDb.query(
+    `
+    SELECT tu.TtsId, tu.UpdatedTime, t.CustServId, t.VcId, cs.contactIdT2T
+    FROM TtsUpdate tu
+    LEFT JOIN Tts t ON tu.TtsId = t.TtsId
+    LEFT JOIN Employee e ON t.EmpId = e.EmpId
+    LEFT JOIN CustomerServices cs on cs.CustServId = t.CustServId
+    LEFT JOIN Customer c ON cs.CustId = c.CustId
+    WHERE t.TtsTypeId = 11
+      AND t.Status = 'Call'
+      AND c.BranchId = '020'
+    ORDER BY tu.TtsId, tu.UpdatedTime DESC
+    `,
+  )
+
+  const now = new Date()
+  const proceeded = new Set<number>()
+
+  for (const row of rows as any[]) {
+    const { TtsId, UpdatedTime, CustServId, VcId, contactIdT2T } = row
+    if (proceeded.has(TtsId)) continue
+    proceeded.add(TtsId)
+
+    const updatedTime = new Date(UpdatedTime)
+    if (updatedTime.getTime() + IGNORED_PERIOD * 1000 > now.getTime()) continue
+
+    const [assignRow] = await mysqlDb.query(
+      `SELECT AssignedNo FROM TtsPIC WHERE TtsId = ? ORDER BY AssignedNo DESC LIMIT 1`,
+      [TtsId],
+    )
+    const assignedNo = (assignRow as any[])[0]?.AssignedNo ?? 0
+
+    const action = CustServId > 0 ? '' : 'tidak jadi pasang'
+
+    // Insert into TtsUpdate
+    const [insertRes] = await mysqlDb.query(
+      `
+      INSERT INTO TtsUpdate (
+        TtsId, UpdatedTime, ActionStart, ActionBegin, ActionEnd, ActionStop, EmpId, Action, Note, AssignedNo, Status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Call')
+      `,
+      [
+        TtsId,
+        updatedTime,
+        updatedTime,
+        updatedTime,
+        updatedTime,
+        updatedTime,
+        'SYSTEM',
+        action,
+        'closed by SYSTEM',
+        assignedNo,
+      ],
+    )
+    const updateId = (insertRes as any).insertId
+
+    // Insert into TtsChange
+    await mysqlDb.query(
+      `INSERT INTO TtsChange (TtsUpdateId, field, OldValue, NewValue) VALUES (?, 'Status', 'Call', 'Closed')`,
+      [updateId],
+    )
+
+    // Update Tts
+    await mysqlDb.query(
+      `UPDATE Tts SET Visited = 1, Status = 'Closed', SolvedBy = '' WHERE TtsId = ?`,
+      [TtsId],
+    )
+
+    // Call Sync T2T
+    if (VcId) {
+      await processSyncT2T(TtsId, updateId, contactIdT2T, {
+        is: {
+          apiKey: SYNC_T2T_API_KEY,
+          syncT2TUrl: SYNC_T2T_API_URL,
+        },
+      })
+    }
+  }
+}
