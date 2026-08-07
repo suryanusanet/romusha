@@ -5,8 +5,8 @@ import {
   GRACEPERIOD_ENGINEER,
   SYNC_T2T_API_URL,
   SYNC_T2T_API_KEY,
-  WHATSAPP_NUSACONTACT_API_NAMESPACE,
-  WHATSAPP_NUSASELECTA_API_NAMESPACE,
+  WHATSAPP_NUSACONTACT_API_URL,
+  WHATSAPP_NUSASELECTA_PHONE_NUMBER_ID,
 } from '../config'
 import { sendWhatsAppFeedbackScore, saveFeedbackSendInfo } from '../nusawa'
 import { processSyncT2T } from '../syncT2t'
@@ -15,12 +15,12 @@ const IGNORED_PERIOD = 86400
 const IGNORED_PERIOD_ESKALASI = 3600
 const NUSASELECTA_BRANCH_ID = '028'
 
-function resolveWhatsAppNamespace(
+function resolveWhatsAppFeedbackUrl(
   displayBranchId: string | null | undefined,
 ): string {
   return displayBranchId === NUSASELECTA_BRANCH_ID
-    ? WHATSAPP_NUSASELECTA_API_NAMESPACE
-    : WHATSAPP_NUSACONTACT_API_NAMESPACE
+    ? `${WHATSAPP_NUSACONTACT_API_URL}?phone_number_id=${WHATSAPP_NUSASELECTA_PHONE_NUMBER_ID}`
+    : WHATSAPP_NUSACONTACT_API_URL
 }
 
 export async function autocloseAssignedTicket() {
@@ -196,7 +196,7 @@ export async function autocloseAssignedTicket() {
       sendWhatsAppFeedbackScore(
         destination,
         JobTitle,
-        resolveWhatsAppNamespace(DisplayBranchId),
+        resolveWhatsAppFeedbackUrl(DisplayBranchId),
       )
       saveFeedbackSendInfo(
         destination,
@@ -408,7 +408,7 @@ export async function autocloseHelpdeskTicket(): Promise<void> {
       sendWhatsAppFeedbackScore(
         destination,
         Title,
-        resolveWhatsAppNamespace(DisplayBranchId),
+        resolveWhatsAppFeedbackUrl(DisplayBranchId),
       )
       saveFeedbackSendInfo(
         destination,

@@ -29,20 +29,20 @@ function sleep(ms: number) {
 export async function sendWhatsAppFeedbackScore(
   destination: string,
   JobTitle: string,
-  namespace: string = WHATSAPP_NUSACONTACT_API_NAMESPACE,
+  url: string = WHATSAPP_NUSACONTACT_API_URL,
   retries: number = 3,
 ) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await axios.post(
-        WHATSAPP_NUSACONTACT_API_URL,
+        url,
         {
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
           to: destination,
           type: 'template',
           template: {
-            namespace,
+            namespace: WHATSAPP_NUSACONTACT_API_NAMESPACE,
             name: 'feedback_score_v05',
             language: { code: 'id' },
             components: [
