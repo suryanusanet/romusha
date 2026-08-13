@@ -147,6 +147,27 @@ async function getContactDetail(phone: string): Promise<ContactDetail | null> {
 }
 
 /**
+ * Format current time as "13 Agustus 2026, 15.28.09 WIB"
+ * @returns {string}
+ */
+function formatUpdatedTimestamp(): string {
+  const parts = new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date())
+
+  const get = (type: string) => parts.find((p) => p.type === type)?.value
+
+  return `${get('day')} ${get('month')} ${get('year')}, ${get('hour')}.${get('minute')}.${get('second')} WIB`
+}
+
+/**
  * Format contact data for Nusacontact
  * @param {string} phoneNumber
  * @param {ContactDetail} contact
@@ -173,6 +194,7 @@ function formatContact(phoneNumber: string, contact: ContactDetail): any {
     companies: contact.companies
       .map(({ id, name }) => createLink(name, id, true))
       .join(', '),
+    update: formatUpdatedTimestamp(),
   }
 
   if (contact.services.length > 0) {
