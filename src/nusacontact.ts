@@ -147,24 +147,20 @@ async function getContactDetail(phone: string): Promise<ContactDetail | null> {
 }
 
 /**
- * Format current time as "13 Agustus 2026, 15.28.09 WIB"
+ * Format current time as "YYYY-MM-DD HH:mm WIB" (e.g. "2026-08-13 15:28 WIB")
  * @returns {string}
  */
 function formatUpdatedTimestamp(): string {
-  const parts = new Intl.DateTimeFormat('id-ID', {
+  const time = new Intl.DateTimeFormat('sv-SE', {
     timeZone: 'Asia/Jakarta',
-    day: 'numeric',
-    month: 'long',
     year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date())
+  }).format(new Date())
 
-  const get = (type: string) => parts.find((p) => p.type === type)?.value
-
-  return `${get('day')} ${get('month')} ${get('year')}, ${get('hour')}.${get('minute')}.${get('second')} WIB`
+  return `${time} WIB`
 }
 
 /**
