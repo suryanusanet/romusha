@@ -18,9 +18,22 @@ const NUSASELECTA_BRANCH_ID = '028'
 function resolveWhatsAppFeedbackUrl(
   displayBranchId: string | null | undefined,
 ): string {
-  return displayBranchId === NUSASELECTA_BRANCH_ID
-    ? `${WHATSAPP_NUSACONTACT_API_URL}?phone_number_id=${WHATSAPP_NUSASELECTA_PHONE_NUMBER_ID}`
-    : WHATSAPP_NUSACONTACT_API_URL
+  if (
+    displayBranchId === NUSASELECTA_BRANCH_ID &&
+    WHATSAPP_NUSASELECTA_PHONE_NUMBER_ID
+  ) {
+    try {
+      const url = new URL(WHATSAPP_NUSACONTACT_API_URL)
+      url.searchParams.set(
+        'phone_number_id',
+        WHATSAPP_NUSASELECTA_PHONE_NUMBER_ID,
+      )
+      return url.toString()
+    } catch {
+      return WHATSAPP_NUSACONTACT_API_URL
+    }
+  }
+  return WHATSAPP_NUSACONTACT_API_URL
 }
 
 export async function autocloseAssignedTicket() {
