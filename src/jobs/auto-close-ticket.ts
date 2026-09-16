@@ -227,6 +227,11 @@ export async function autoCloseEskalasiTickets(): Promise<void> {
     WHERE t.TtsTypeId = 10
       AND t.Status = 'Call'
       AND c.BranchId = '020'
+      AND NOT EXISTS (
+        SELECT 1 FROM FiberVendorTickets fvt
+        WHERE fvt.ticket_id = t.TtsId
+          AND (fvt.vendor_ticket_status IS NULL OR fvt.vendor_ticket_status <> 'Closed')
+      )
     ORDER BY tu.TtsId, tu.UpdatedTime DESC
     `,
   )
