@@ -5,12 +5,36 @@ import {
   GRACEPERIOD_ENGINEER,
   SYNC_T2T_API_URL,
   SYNC_T2T_API_KEY,
+  WHATSAPP_NUSACONTACT_API_URL,
+  WHATSAPP_NUSASELECTA_PHONE_NUMBER_ID,
 } from '../config'
 import { sendWhatsAppFeedbackScore, saveFeedbackSendInfo } from '../nusawa'
 import { processSyncT2T } from '../syncT2t'
 
 const IGNORED_PERIOD = 86400
 const IGNORED_PERIOD_ESKALASI = 3600
+const NUSASELECTA_BRANCH_ID = '028'
+
+function resolveWhatsAppFeedbackUrl(
+  displayBranchId: string | null | undefined,
+): string {
+  if (
+    displayBranchId === NUSASELECTA_BRANCH_ID &&
+    WHATSAPP_NUSASELECTA_PHONE_NUMBER_ID
+  ) {
+    try {
+      const url = new URL(WHATSAPP_NUSACONTACT_API_URL)
+      url.searchParams.set(
+        'phone_number_id',
+        WHATSAPP_NUSASELECTA_PHONE_NUMBER_ID,
+      )
+      return url.toString()
+    } catch {
+      return WHATSAPP_NUSACONTACT_API_URL
+    }
+  }
+  return WHATSAPP_NUSACONTACT_API_URL
+}
 
 export async function autocloseAssignedTicket() {
   const REQUEST_TICKET = 1
@@ -20,7 +44,7 @@ export async function autocloseAssignedTicket() {
 
   const [solvedTickets] = await mysqlDb.query(
     `
-        SELECT tu.TtsId, tu.UpdatedTime, t.TtsTypeId, t.CustId, t.AssignedNo, t.VcId, cs.contactIdT2T
+        SELECT tu.TtsId, tu.UpdatedTime, t.TtsTypeId, t.CustId, t.AssignedNo, t.VcId, cs.contactIdT2T, c.DisplayBranchId
         FROM TtsUpdate tu
         LEFT JOIN Tts t ON tu.TtsId = t.TtsId
         LEFT JOIN Employee e ON t.EmpId = e.EmpId
@@ -47,6 +71,7 @@ export async function autocloseAssignedTicket() {
       AssignedNo,
       VcId,
       contactIdT2T,
+      DisplayBranchId,
     } = ticket
     if (proceeded.has(TtsId)) continue
     proceeded.add(TtsId)
@@ -181,7 +206,11 @@ export async function autocloseAssignedTicket() {
     }
 
     try {
-      sendWhatsAppFeedbackScore(destination, JobTitle)
+      sendWhatsAppFeedbackScore(
+        destination,
+        JobTitle,
+        resolveWhatsAppFeedbackUrl(DisplayBranchId),
+      )
       saveFeedbackSendInfo(
         destination,
         CustId,
@@ -301,7 +330,7 @@ export async function autocloseHelpdeskTicket(): Promise<void> {
   const INCIDENT_TICKET = 2
   const [solvedTickets] = await mysqlDb.query(
     `
-    SELECT tu.TtsId, tu.UpdatedTime, t.TtsTypeId, t.CustId, t.AssignedNo, t.VcId, cs.contactIdT2T, jt.Title
+    SELECT tu.TtsId, tu.UpdatedTime, t.TtsTypeId, t.CustId, t.AssignedNo, t.VcId, cs.contactIdT2T, jt.Title, c.DisplayBranchId
     FROM TtsUpdate tu
     LEFT JOIN Tts t ON tu.TtsId = t.TtsId
     LEFT JOIN Employee e ON t.EmpId = e.EmpId
@@ -330,6 +359,7 @@ export async function autocloseHelpdeskTicket(): Promise<void> {
       VcId,
       contactIdT2T,
       Title,
+      DisplayBranchId,
     } = ticket
     if (proceeded.has(TtsId)) continue
     proceeded.add(TtsId)
@@ -388,7 +418,11 @@ export async function autocloseHelpdeskTicket(): Promise<void> {
     }
 
     try {
-      sendWhatsAppFeedbackScore(destination, Title)
+      sendWhatsAppFeedbackScore(
+        destination,
+        Title,
+        resolveWhatsAppFeedbackUrl(DisplayBranchId),
+      )
       saveFeedbackSendInfo(
         destination,
         CustId,
